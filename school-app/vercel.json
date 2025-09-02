@@ -20,7 +20,7 @@
     "DB_HOST": "switchback.proxy.rlwy.net",
     "DB_USER": "root",
     "DB_PASSWORD": "oHjHIpdxmBxrnvJQeCEgiudWsThAgZqD",
-    "DB_NAME": "railway",
+    "DB_NAME": "project",
     "DB_PORT": "51312",
     "CLOUDINARY_CLOUD_NAME": "dispplzs3",
     "CLOUDINARY_API_KEY": "887867659244255",
