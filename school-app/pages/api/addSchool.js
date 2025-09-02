@@ -1,33 +1,31 @@
 import formidable from "formidable";
-import fs from "fs";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 import { connectDB } from "@/lib/db";
+import fs from "fs";
 
+// Disable default body parsing for file upload
 export const config = { api: { bodyParser: false } };
 
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const uploadDir = path.join(process.cwd(), "public/schoolImages");
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
+  // Create formidable instance
   const form = formidable({
-    uploadDir,
-    keepExtensions: true,
     multiples: false,
-    filename: (name, ext, part) => Date.now() + "-" + part.originalFilename,
+    keepExtensions: true,
   });
 
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: "File upload error" });
-    if (!files.image) return res.status(400).json({ error: "No image uploaded" });
+    if (err) return res.status(500).json({ error: "Form parsing error" });
 
-    // Extract single file
-    const uploadedFile = Array.isArray(files.image) ? files.image[0] : files.image;
-
-    // Extract single values from arrays
+    // Handle arrays from FormData
     const name = Array.isArray(fields.name) ? fields.name[0] : fields.name;
     const address = Array.isArray(fields.address) ? fields.address[0] : fields.address;
     const city = Array.isArray(fields.city) ? fields.city[0] : fields.city;
@@ -35,21 +33,35 @@ export default async function handler(req, res) {
     const contact = Array.isArray(fields.contact) ? fields.contact[0] : fields.contact;
     const email_id = Array.isArray(fields.email_id) ? fields.email_id[0] : fields.email_id;
 
-    if (!name || !address || !city || !state || !contact || !email_id) {
+    if (!name || !address || !city || !state || !contact || !email_id)
       return res.status(400).json({ error: "All fields are required" });
-    }
 
-    const imagePath = "/schoolImages/" + path.basename(uploadedFile.filepath);
+    const contactNumber = parseInt(contact, 10);
+    if (isNaN(contactNumber)) return res.status(400).json({ error: "Invalid contact number" });
+
+    if (!files.image) return res.status(400).json({ error: "Image is required" });
 
     try {
+      const uploadedFile = Array.isArray(files.image) ? files.image[0] : files.image;
+
+      // Upload image to Cloudinary
+      const result = await cloudinary.uploader.upload(uploadedFile.filepath, { folder: "schools" });
+      const imageUrl = result.secure_url;
+
+      // Store in Railway MySQL
       const db = await connectDB();
       await db.execute(
         "INSERT INTO schools (name, address, city, state, contact, image, email_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [name, address, city, state, contact, imagePath, email_id]
+        [name, address, city, state, contactNumber, imageUrl, email_id]
       );
       await db.end();
+
+      // Delete temporary file
+      if (fs.existsSync(uploadedFile.filepath)) fs.unlinkSync(uploadedFile.filepath);
+
       res.status(200).json({ message: "School added successfully" });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: error.message });
     }
   });
