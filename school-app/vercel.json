@@ -17,13 +17,14 @@
     }
   ],
   "env": {
-    "DB_HOST": "@db_host",
-    "DB_USER": "@db_user",
-    "DB_PASSWORD": "@db_password",
-    "DB_NAME": "@db_name",
-    "DB_PORT": "3306",
-    "CLOUDINARY_CLOUD_NAME": "@cloudinary_cloud_name",
-    "CLOUDINARY_API_KEY": "@cloudinary_api_key",
-    "CLOUDINARY_API_SECRET": "@cloudinary_api_secret"
-  }
+    "DB_HOST": "switchback.proxy.rlwy.net",
+    "DB_USER": "root",
+    "DB_PASSWORD": "oHjHIpdxmBxrnvJQeCEgiudWsThAgZqD",
+    "DB_NAME": "railway",
+    "DB_PORT": "51312",
+    "CLOUDINARY_CLOUD_NAME": "Root",
+    "CLOUDINARY_API_KEY": "887867659244255",
+    "CLOUDINARY_API_SECRET": "RbypjddMgv62rZuBe1oJB-JDCss"
+   }
+
 }
